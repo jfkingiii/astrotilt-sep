@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astrotilt"
+version = "0.2.0"
+description = "Measure telescope optical tilt via star eccentricity in FITS images"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+    "astropy",
+    "sep>=1.4",
+    "tqdm",
+    "xisf",
+]
+
+[project.scripts]
+astrotilt = "astrotilt.analyze:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -159,9 +159,16 @@ def collect_image_files(path_arg):
 
 
 def print_summary_grids(df, verbose=False):
-    """Print median_eccentricity as 3×3 grids to stderr. Mean and std only with verbose."""
+    """
+    Print median_eccentricity as 3×3 grids to stderr: the median across subs and
+    its difference from the centre cell. Mean and std only with verbose.
+    """
     grp = df.groupby(["cell_row", "cell_col"])["median_eccentricity"]
-    stats = {"Median across subs": grp.median()}
+    median = grp.median()
+    stats = {
+        "Median across subs": median,
+        "Difference from centre (median)": median - median.get((1, 1), np.nan),
+    }
     if verbose:
         stats["Mean across subs"] = grp.mean()
         stats["Standard deviation across subs"] = grp.std()
@@ -171,12 +178,17 @@ def print_summary_grids(df, verbose=False):
     separator = "  ".join("-" * col_w for _ in range(3))
 
     for title, series in stats.items():
+        signed = title.startswith("Difference")
+
+        def fmt(v):
+            return f"{v:+.4f}" if signed and v != 0 and not np.isnan(v) else f"{v:.4f}"
+
         print(f"\n{title}", file=sys.stderr)
         print(f"         {header}", file=sys.stderr)
         print(f"         {separator}", file=sys.stderr)
         for r in range(3):
             vals = "  ".join(
-                f"{series.get((r, c), float('nan')):.4f}".center(col_w)
+                fmt(series.get((r, c), float("nan"))).center(col_w)
                 for c in range(3)
             )
             print(f"  row {r}  {vals}", file=sys.stderr)

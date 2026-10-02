@@ -57,7 +57,7 @@ astrotilt samples/ --min-snr 100 --saturation 65000
 
 ## Output
 
-A progress bar is shown during analysis. Afterwards, a 3×3 median eccentricity grid is printed to stderr:
+A progress bar is shown during analysis. Afterwards, a 3×3 median eccentricity grid and its difference from the centre cell are printed to stderr:
 
 ```
 Median across subs
@@ -66,6 +66,13 @@ Median across subs
   row 0   0.3210    0.2845    0.3501
   row 1   0.2901    0.2634    0.2978
   row 2   0.3412    0.2790    0.3689
+
+Difference from centre (median)
+          col 0     col 1     col 2
+         --------  --------  --------
+  row 0  +0.0576   +0.0211   +0.0867
+  row 1  +0.0267    0.0000   +0.0344
+  row 2  +0.0778   +0.0156   +0.1055
 ```
 
 With `--verbose`, mean and standard deviation grids are also printed, along with a per-file star count, a stars-per-cell grid, and orientation diagnostics:

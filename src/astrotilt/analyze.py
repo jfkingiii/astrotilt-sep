@@ -63,8 +63,9 @@ def analyze_file(image_path, nsigma=5.0, min_pixels=5, max_pixels=1000,
     their shapes are measured.
 
     Each row also carries the cell's coherent elongation (magnitude and angle
-    of the mean spin-2 vector e*exp(2i*theta)) and the frame-level orientation
-    summary from ``orientation_summary``.
+    of the mean spin-2 vector e*exp(2i*theta)), the frame-level orientation
+    summary from ``orientation_summary``, and the frame's median eccentricity
+    and median FWHM (``frame_median_e``, ``frame_fwhm``).
     """
     GRID = 3
     filename = os.path.basename(image_path)
@@ -87,6 +88,13 @@ def analyze_file(image_path, nsigma=5.0, min_pixels=5, max_pixels=1000,
         bayer=bayer,
     )
     frame = orientation_summary(stars, W, H)
+    if len(stars):
+        frame_median_e = float(np.median(stars["eccentricity"]))
+        # Gaussian-equivalent FWHM from the isophotal second moments; reads
+        # somewhat below a fitted FWHM but tracks focus/seeing changes.
+        frame_fwhm = float(2.3548 * np.median(np.sqrt(stars["a"] * stars["b"])))
+    else:
+        frame_median_e = frame_fwhm = np.nan
 
     rows_out = []
     for cell_row in range(GRID):
@@ -128,6 +136,8 @@ def analyze_file(image_path, nsigma=5.0, min_pixels=5, max_pixels=1000,
                 "frame_common_e": frame["common_e"],
                 "frame_common_theta_deg": frame["common_theta_deg"],
                 "frame_radial_e": frame["radial_e"],
+                "frame_median_e": frame_median_e,
+                "frame_fwhm": frame_fwhm,
             })
 
     if verbose:
@@ -224,6 +234,43 @@ def print_orientation_summary(df, median_grid):
     print(f"  median e, row 2 - row 0  {top_bottom:+.3f}   (gradient along y: tilt / decentering)", file=sys.stderr)
 
 
+def per_sub_table(df):
+    """One row per sub: star count, FWHM, median e, region medians, orientation."""
+    out = []
+    for filename, rows in df.groupby("filename", sort=False):
+        grid = np.full((3, 3), np.nan)
+        for r in rows.itertuples():
+            grid[r.cell_row, r.cell_col] = r.median_eccentricity
+        first = rows.iloc[0]
+        out.append({
+            "filename": filename,
+            "n_stars": int(rows["n_stars"].sum()),
+            "fwhm_px": first["frame_fwhm"],
+            "median_eccentricity": first["frame_median_e"],
+            "centre_e": grid[1, 1],
+            "edge_e": np.nanmean(grid[[0, 1, 1, 2], [1, 0, 2, 1]]),
+            "corner_e": np.nanmean(grid[[0, 0, 2, 2], [0, 2, 0, 2]]),
+            "common_e": first["frame_common_e"],
+            "common_theta_deg": first["frame_common_theta_deg"],
+            "radial_e": first["frame_radial_e"],
+            "x_gradient_e": np.nanmean(grid[:, 2]) - np.nanmean(grid[:, 0]),
+            "y_gradient_e": np.nanmean(grid[2, :]) - np.nanmean(grid[0, :]),
+        })
+    return pd.DataFrame(out)
+
+
+def print_per_sub(table):
+    """Print the per-sub table to stdout, one line per sub."""
+    name_w = max(len("file"), *(len(f) for f in table["filename"]))
+    print(f"{'file':<{name_w}}  stars   FWHM  med_e  centre  edges  corners    common     "
+          "radial  x_grad  y_grad")
+    for r in table.itertuples():
+        common = f"{r.common_e:.2f} @{r.common_theta_deg:+4.0f}"
+        print(f"{r.filename:<{name_w}}  {r.n_stars:5d}  {r.fwhm_px:5.2f}  {r.median_eccentricity:5.2f}  "
+              f"{r.centre_e:6.2f}  {r.edge_e:5.2f}  {r.corner_e:7.2f}  {common:>11}  "
+              f"{r.radial_e:+6.3f}  {r.x_gradient_e:+6.3f}  {r.y_gradient_e:+6.3f}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Analyze star eccentricity across a 3×3 image grid using SEP."
@@ -279,6 +326,12 @@ def main():
         action="store_true",
         help="Print progress to stderr",
     )
+    parser.add_argument(
+        "--per-sub",
+        action="store_true",
+        help="Print one line per sub to stdout instead of the 3×3 summary grids; "
+             "with --output, write that table as the CSV",
+    )
     args = parser.parse_args()
 
     files = collect_image_files(args.input)
@@ -306,6 +359,15 @@ def main():
             print(f" {total_stars} stars found", file=sys.stderr)
         all_rows.extend(rows)
 
+    print(f"\nAnalyzed {n} file(s)", file=sys.stderr)
+
+    if args.per_sub:
+        table = per_sub_table(pd.DataFrame(all_rows))
+        print_per_sub(table)
+        if args.output:
+            table.to_csv(args.output, index=False)
+        return
+
     df = pd.DataFrame(all_rows, columns=[
         "filename", "cell_row", "cell_col",
         "cell_x_center", "cell_y_center",
@@ -313,8 +375,6 @@ def main():
         "coherent_e", "coherent_theta_deg",
         "frame_common_e", "frame_common_theta_deg", "frame_radial_e",
     ])
-
-    print(f"\nAnalyzed {n} file(s)", file=sys.stderr)
 
     print_summary_grids(df, verbose=args.verbose)
 

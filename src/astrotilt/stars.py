@@ -13,6 +13,10 @@ toward round.
 import numpy as np
 import sep
 
+# Minimum major-axis RMS size (px) for a real star (FWHM ~1.2 px). Hot pixels
+# and cosmic rays measure ~0.02-0.15 px; real stars are far larger.
+MIN_STAR_SIGMA = 0.5
+
 STAR_DTYPE = np.dtype([
     ("x", "f8"),
     ("y", "f8"),
@@ -95,7 +99,10 @@ def extract_stars(image, nsigma=5.0, min_pixels=5, max_pixels=1000,
     * have S/N >= ``min_snr``, where S/N = segment flux / (rms * sqrt(npix)).
       Faint stars carry a strong upward noise bias in eccentricity, so this cut
       matters for an absolute roundness metric;
-    * have no raw pixel at or above ``saturation`` (if given).
+    * have no raw pixel at or above ``saturation`` (if given);
+    * have a major-axis RMS size ``a >= MIN_STAR_SIGMA`` (rejects hot pixels
+      and cosmic rays, which SEP's detection filter spreads over enough
+      pixels to pass ``min_pixels``).
 
     SEP's ``OBJ_MERGED`` flag is *not* used as a cut: deblended neighbours are
     measured normally.
@@ -162,6 +169,8 @@ def extract_stars(image, nsigma=5.0, min_pixels=5, max_pixels=1000,
         if shape is None:
             continue
         cx, cy, a, b, theta = shape
+        if a < MIN_STAR_SIGMA:
+            continue
 
         result[i] = (x0 + cx, y0 + cy, npix, a, b, theta, obj["flag"], snr, peak,
                      eccentricity_from_axes(a, b))
@@ -181,9 +190,12 @@ def orientation_summary(stars, width, height):
       vector over all stars. Large when all stars point the same way
       (tracking, guiding, wind, vibration).
     * ``radial_e``: mean of ``e * cos(2(theta - phi))`` over stars outside the
-      central third of the field, where ``phi`` is the star's position angle
-      from the frame centre. Positive = radially elongated, negative =
-      tangentially elongated (backfocus / field-curvature / astigmatism patterns).
+      central third of the field, after subtracting the common vector, where
+      ``phi`` is the star's position angle from the frame centre. Positive =
+      radially elongated, negative = tangentially elongated (backfocus /
+      field-curvature / astigmatism patterns). The common vector is removed
+      first because on a non-square frame a field-wide elongation would
+      otherwise leak into this score (e.g. e=0.4 along x reads +0.09 on 3:2).
     """
     nan = float("nan")
     if len(stars) == 0:
@@ -196,7 +208,7 @@ def orientation_summary(stars, width, height):
     dy = stars["y"] - height / 2.0
     outer = np.hypot(dx / width, dy / height) > 1.0 / 6.0
     phi = np.arctan2(dy, dx)
-    radial = (z * np.exp(-2j * phi)).real[outer]
+    radial = ((z - common) * np.exp(-2j * phi)).real[outer]
 
     return {
         "common_e": float(abs(common)),

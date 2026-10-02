@@ -130,3 +130,22 @@ def test_bayer_mosaic_sky_offsets_equalized():
     stars = extract_stars(img, bayer=True)
     assert len(stars) == 100
     assert np.median(stars["eccentricity"]) == pytest.approx(0.5, abs=0.03)
+
+
+def test_hot_pixels_rejected():
+    img, _ = star_field(grid_positions(), snr=300)
+    rng = np.random.default_rng(9)
+    for x, y in zip(rng.integers(5, 475, 30), rng.integers(5, 475, 30)):
+        img[y, x] += 5000.0
+    stars = extract_stars(img)
+    assert len(stars) == 100
+    assert np.all(stars["a"] > 1.0)
+
+
+def test_common_elongation_does_not_leak_into_radial_score():
+    # 3:2 frame, every star elongated along x: common, not radial
+    positions = [(40.0 * (j + 0.5), 40.0 * (i + 0.5)) for i in range(8) for j in range(12)]
+    img, _ = star_field(positions, ecc=0.5, theta=0.0, snr=500, shape=(320, 480))
+    s = orientation_summary(extract_stars(img), 480, 320)
+    assert s["common_e"] > 0.4
+    assert abs(s["radial_e"]) < 0.03

@@ -32,6 +32,9 @@ astrotilt "data/*.fits" --output results.csv
 # Show per-file star counts and full summary tables (median, mean, std)
 astrotilt samples/ --verbose
 
+# One line per sub (spot trailed, bloated or otherwise bad subs)
+astrotilt samples/ --per-sub
+
 # Adjust detection parameters
 astrotilt img.fits --threshold 4.0 --min-pixels 3 --max-pixels 500
 
@@ -50,6 +53,7 @@ astrotilt samples/ --min-snr 100 --saturation 65000
 | `--saturation ADU` | off | Reject stars with any raw pixel at or above this value |
 | `--output FILE` | — | Write CSV output to FILE |
 | `--verbose` | off | Show per-file star counts and full summary tables |
+| `--per-sub` | off | Print one line per sub to stdout instead of the 3×3 grids; with `--output`, write that table as the CSV |
 
 ## Output
 
@@ -93,7 +97,30 @@ With `--output`, a CSV is written with one row per file per cell:
 | `median_eccentricity` | Median second-moment eccentricity (0 = round, 1 = line) |
 | `coherent_e` / `coherent_theta_deg` | Magnitude and angle of the cell's mean `e·exp(2iθ)` |
 | `frame_common_e` / `frame_common_theta_deg` | Same, over all stars in the frame |
-| `frame_radial_e` | Mean `e·cos(2(θ − φ))` outside the central region; + radial, − tangential |
+| `frame_radial_e` | Mean `e·cos(2(θ − φ))` outside the central region, after removing the frame's common elongation; + radial, − tangential |
+
+### Per-sub output
+
+With `--per-sub`, astrotilt prints one line per sub to stdout instead of the summary grids:
+
+```
+file                 stars   FWHM  med_e  centre  edges  corners    common     radial  x_grad  y_grad
+synthetic_0000.fits    168   4.88   0.45    0.33   0.56     0.36   0.05 @  +2  +0.213  -0.039  -0.040
+```
+
+| Column | Description |
+|--------|-------------|
+| `stars` | Stars measured in the sub |
+| `FWHM` | Median Gaussian-equivalent FWHM in pixels, from second moments (reads somewhat below a fitted FWHM) |
+| `med_e` | Median eccentricity of all stars in the sub |
+| `centre` / `edges` / `corners` | Median eccentricity of the centre cell, and mean of the edge-centre and corner cells' medians |
+| `common` | The sub's common elongation (e @ angle); large when stars are trailed in one direction |
+| `radial` | Radial score (+ radial, − tangential) |
+| `x_grad` / `y_grad` | Median e of column 2 minus column 0, and row 2 minus row 0 |
+
+Because eccentricity is a ratio of axes, a fixed trail length stretches small stars more than bloated ones; read `med_e` together with `FWHM`. The summary grids take the median across subs, which hides a few bad subs; `--per-sub` shows them.
+
+With `--output`, the CSV has columns `filename`, `n_stars`, `fwhm_px`, `median_eccentricity`, `centre_e`, `edge_e`, `corner_e`, `common_e`, `common_theta_deg`, `radial_e`, `x_gradient_e`, `y_gradient_e`.
 
 ## Measurement method
 
@@ -102,7 +129,7 @@ For each image, astrotilt now:
 1. estimates a spatially varying background and noise map with `sep.Background`;
 2. subtracts that background;
 3. detects/deblends sources with `sep.extract` at the requested sigma threshold;
-4. rejects sources that touch the frame edge (SEP `OBJ_TRUNC`), fall below `--min-snr`, or contain pixels at or above `--saturation`;
+4. rejects sources that touch the frame edge (SEP `OBJ_TRUNC`), fall below `--min-snr`, contain pixels at or above `--saturation`, or are too sharp to be stars (hot pixels and cosmic rays);
 5. computes intensity-weighted second moments of the *unfiltered* background-subtracted pixels in each SEP segment (SEP's own `a`/`b` are measured on its detection-filtered image, which makes small stars look rounder);
 6. computes eccentricity as `sqrt(1 - (b/a)^2)`; and
 7. assigns each source to a 3×3 cell by its centroid.

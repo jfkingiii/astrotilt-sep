@@ -1,0 +1,39 @@
+Review and test the SEP-based rewrite of astrotilt. The goal is to determine whether it is fit for measuring how close astrophotography stars are to round, while preserving the current CLI behavior and 3×3 cell summary output.
+Please focus on these tests:
+- Verify the CLI still behaves the same way, especially astrotilt --verbose ., directory/file handling, and the existing median/mean/std 3×3 output.
+- Confirm the SEP implementation is correct:
+  - sep.Background is used appropriately.
+  - background is subtracted before shape measurement.
+  - sep.extract thresholding really corresponds to the intended sigma threshold.
+  - a, b, and theta are interpreted correctly.
+  - eccentricity is computed as sqrt(1 - (b/a)^2).
+  - stars are detected on the whole frame and only afterward assigned to grid cells by centroid.
+  - SEP flags, invalid shapes, edge detections, blends, saturated objects, etc. are handled sensibly.
+- Compare the SEP rewrite against the original astrotilt on exactly the same FITS files. In particular, use representative 10 s and 20 s NINA subs if available. Report:
+  - star counts
+  - 3×3 mean eccentricity
+  - 3×3 median eccentricity
+  - frame-to-frame standard deviation
+  - any systematic differences between old and new versions.
+- Test absolute eccentricity accuracy with synthetic stars. Generate noise-added circular and elliptical Gaussian or Moffat stars with known axis ratios. Include several S/N levels and subpixel centroid positions. Check whether:
+  - circular stars give eccentricity close to 0
+  - known elliptical stars recover the expected value
+  - results are stable with changing brightness/background
+  - results are stable when a star falls near a 3×3 grid boundary.
+- Test difficult real-world cases:
+  - close/blended stars
+  - saturated stars
+  - stars near frame edges
+  - nebulous or spatially varying backgrounds
+  - low-S/N stars
+  - crowded fields.
+- Determine whether the current filtering is adequate for an absolute “round-star” metric. If not, recommend minimal additional cuts, preferably using SEP-native information such as flags, flux/SNR, npix, peak, a/b, or saturation thresholds.
+- Check whether median eccentricity is more stable than mean eccentricity and whether the program should make median the primary metric.
+- Add or evaluate orientation (theta) reporting. The eventual goal is not just to say “stars are elongated,” but to distinguish:
+  - common orientation across field → tracking/guiding/vibration
+  - radial/tangential pattern → backfocus / optical aberration
+  - spatial gradient → tilt/decentering.
+The main acceptance question is: Can this SEP-based version reliably answer “are my stars close to round?” and “is one part of the field systematically worse than another?”
+Do not over-engineer it yet. Prefer validating the simple SEP approach before proposing PSF fitting or a larger redesign.
+
+The most valuable result from the agent would be a small table showing true synthetic eccentricity vs measured SEP eccentricity at several S/N levels. That will tell us whether a threshold such as e < 0.5 actually has a defensible meaning.

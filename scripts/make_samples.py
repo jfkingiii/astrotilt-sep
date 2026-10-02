@@ -3,8 +3,9 @@
 make_samples.py — Generate small synthetic FITS and XISF sample files.
 
 Produces 3 synthetic 512×512 uint16 frames per format with artificial
-Gaussian stars and background noise. Stars near corners are elongated
-to simulate realistic tilt-induced eccentricity variation.
+Gaussian stars and background noise. Stars in the edge-centre cells are
+stretched 1.25x along one axis (radially); corner cells are stretched along
+both axes, so they stay round.
 
 Usage:
     python scripts/make_samples.py

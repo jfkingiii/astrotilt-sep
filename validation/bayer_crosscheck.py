@@ -12,7 +12,7 @@ every method so all three see the same saturation policy.
 
 Usage:
   python validation/bayer_crosscheck.py synthetic
-  python validation/bayer_crosscheck.py real <M44 exposure dir> <out.json>
+  python validation/bayer_crosscheck.py real <dir of raw RGGB subs> <out.json>
   python validation/bayer_crosscheck.py summary <out.json> [...]
 """
 

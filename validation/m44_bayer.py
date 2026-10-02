@@ -1,6 +1,12 @@
-"""Real M44 OSC subs: raw mosaic vs per-channel-equalized vs 2x2 superpixel."""
+"""Real OSC subs: raw mosaic vs per-channel-equalized vs 2x2 superpixel.
+
+Usage: python m44_bayer.py <subs root> [n subs per exposure]
+<subs root> holds one subdirectory per exposure (e.g. 1s/ 2s/ 5s/ 10s/) of raw
+RGGB FITS files. The M44 subs used during validation are not in the repo.
+"""
 
 import glob
+import os
 import sys
 
 import numpy as np
@@ -27,9 +33,12 @@ def cell_grid(s, W, H):
     return np.array([np.median(s["eccentricity"][ci == k]) if np.any(ci == k) else np.nan for k in range(9)])
 
 
-nsub = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-for t in ("1s", "2s", "5s", "10s"):
-    files = sorted(glob.glob(f"../M44/{t}/*.fits"))[:nsub]
+root = sys.argv[1]
+nsub = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+for t in sorted(os.listdir(root)):
+    files = sorted(glob.glob(os.path.join(root, t, "*.fits")))[:nsub]
+    if not files:
+        continue
     acc = {k: [] for k in ("raw", "equalized", "superpixel")}
     for f in files:
         raw = fits.getdata(f).astype(np.float32)

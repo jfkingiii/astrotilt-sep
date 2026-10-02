@@ -191,7 +191,7 @@ def orientation_summary(stars, width, height):
       (tracking, guiding, wind, vibration).
     * ``radial_e``: mean of ``e * cos(2(theta - phi))`` over stars outside the
       central third of the field, after subtracting the common vector, where
-      ``phi`` is the star's position angle from the frame centre. Positive =
+      ``phi`` is the star's position angle from the frame center. Positive =
       radially elongated, negative = tangentially elongated (backfocus /
       field-curvature / astigmatism patterns). The common vector is removed
       first because on a non-square frame a field-wide elongation would

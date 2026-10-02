@@ -161,13 +161,13 @@ def collect_image_files(path_arg):
 def print_summary_grids(df, verbose=False):
     """
     Print median_eccentricity as 3×3 grids to stderr: the median across subs and
-    its difference from the centre cell. Mean and std only with verbose.
+    its difference from the center cell. Mean and std only with verbose.
     """
     grp = df.groupby(["cell_row", "cell_col"])["median_eccentricity"]
     median = grp.median()
     stats = {
         "Median across subs": median,
-        "Difference from centre (median)": median - median.get((1, 1), np.nan),
+        "Difference from center (median)": median - median.get((1, 1), np.nan),
     }
     if verbose:
         stats["Mean across subs"] = grp.mean()
@@ -181,7 +181,7 @@ def print_summary_grids(df, verbose=False):
         signed = title.startswith("Difference")
 
         def fmt(v):
-            return f"{v:+.4f}" if signed and v != 0 and not np.isnan(v) else f"{v:.4f}"
+            return (f"{v:+.3f}" if v != 0 and not np.isnan(v) else f"{v: .3f}") if signed else f"{v:.3f}"
 
         print(f"\n{title}", file=sys.stderr)
         print(f"         {header}", file=sys.stderr)
@@ -259,7 +259,7 @@ def per_sub_table(df):
             "n_stars": int(rows["n_stars"].sum()),
             "fwhm_px": first["frame_fwhm"],
             "median_eccentricity": first["frame_median_e"],
-            "centre_e": grid[1, 1],
+            "center_e": grid[1, 1],
             "edge_e": np.nanmean(grid[[0, 1, 1, 2], [1, 0, 2, 1]]),
             "corner_e": np.nanmean(grid[[0, 0, 2, 2], [0, 2, 0, 2]]),
             "common_e": first["frame_common_e"],
@@ -274,12 +274,12 @@ def per_sub_table(df):
 def print_per_sub(table):
     """Print the per-sub table to stdout, one line per sub."""
     name_w = max(len("file"), *(len(f) for f in table["filename"]))
-    print(f"{'file':<{name_w}}  stars   FWHM  med_e  centre  edges  corners    common     "
+    print(f"{'file':<{name_w}}  stars   FWHM  med_e  center  edges  corners    common     "
           "radial  x_grad  y_grad")
     for r in table.itertuples():
         common = f"{r.common_e:.2f} @{r.common_theta_deg:+4.0f}"
         print(f"{r.filename:<{name_w}}  {r.n_stars:5d}  {r.fwhm_px:5.2f}  {r.median_eccentricity:5.2f}  "
-              f"{r.centre_e:6.2f}  {r.edge_e:5.2f}  {r.corner_e:7.2f}  {common:>11}  "
+              f"{r.center_e:6.2f}  {r.edge_e:5.2f}  {r.corner_e:7.2f}  {common:>11}  "
               f"{r.radial_e:+6.3f}  {r.x_gradient_e:+6.3f}  {r.y_gradient_e:+6.3f}")
 
 

@@ -61,7 +61,7 @@ def psf_stamp(profile, fwhm, q, theta, dx, dy, half, beta=3.0):
 
     profile: 'gauss' or 'moffat'. fwhm is along the MAJOR axis; minor axis = q*major.
     theta: major-axis angle, radians CCW from +x (array column) toward +y (array row).
-    dx, dy: subpixel centroid offsets relative to stamp centre.
+    dx, dy: subpixel centroid offsets relative to stamp center.
     """
     n = 2 * half + 1
     s = (np.arange(n * OS) + 0.5) / OS - 0.5 - half

@@ -3,7 +3,7 @@
 make_samples.py — Generate small synthetic FITS and XISF sample files.
 
 Produces 3 synthetic 512×512 uint16 frames per format with artificial
-Gaussian stars and background noise. Stars in the edge-centre cells are
+Gaussian stars and background noise. Stars in the edge-center cells are
 stretched 1.25x along one axis (radially); corner cells are stretched along
 both axes, so they stay round.
 
@@ -54,7 +54,7 @@ def make_frame(rng, frame_index):
             c0 = cell_col * cell_w
             c1 = WIDTH if cell_col == GRID - 1 else (cell_col + 1) * cell_w
 
-            # Eccentricity increases toward corners: measure distance from centre
+            # Eccentricity increases toward corners: measure distance from center
             corner_dist = max(abs(cell_row - 1), abs(cell_col - 1))  # 0 or 1
             sigma_base = 1.8  # ~FWHM 4px
             # Elongate in x for left/right corners, y for top/bottom

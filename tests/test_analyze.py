@@ -20,7 +20,7 @@ def test_per_sub_table_one_row_per_sub():
     assert list(table["filename"]) == [os.path.basename(p) for p in SAMPLES]
     cells = pd.DataFrame(rows).groupby("filename", sort=False)["n_stars"].sum()
     assert list(table["n_stars"]) == list(cells)
-    # samples: edge-centre cells stretched radially, centre and corners round
-    assert np.all(table["edge_e"] > table["centre_e"] + 0.15)
+    # samples: edge-center cells stretched radially, center and corners round
+    assert np.all(table["edge_e"] > table["center_e"] + 0.15)
     assert np.all(table["radial_e"] > 0.15)
     assert np.all((table["fwhm_px"] > 3) & (table["fwhm_px"] < 6))

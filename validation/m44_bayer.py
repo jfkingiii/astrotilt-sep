@@ -54,7 +54,7 @@ for t in sorted(os.listdir(root)):
                               o["common_e"], o["common_theta_deg"], o["radial_e"],
                               scale * 2.3548 * np.median(np.sqrt(s["a"] * s["b"]))))
     print(f"\n=== {t} ({len(files)} subs, means over subs)")
-    print(f"  {'method':11s} {'stars':>6} {'bg rms':>7} {'centre':>7} {'edges':>6} {'corners':>7} {'common':>11} {'radial':>7} {'FWHM px':>7}")
+    print(f"  {'method':11s} {'stars':>6} {'bg rms':>7} {'center':>7} {'edges':>6} {'corners':>7} {'common':>11} {'radial':>7} {'FWHM px':>7}")
     for name, rows in acc.items():
         r = np.array(rows)
         z = np.mean(r[:, 5] * np.exp(2j * np.radians(r[:, 6])))

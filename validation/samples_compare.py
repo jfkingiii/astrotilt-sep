@@ -1,6 +1,6 @@
 """Original vs initial SEP (v0.2.0 as reviewed) vs fixed astrotilt.stars on the bundled sample FITS (truth known
-from scripts/make_samples.py: centre & corner cells ~round apart from +-10% sigma
-jitter; edge-centre cells stretched 1.25x along one axis)."""
+from scripts/make_samples.py: center & corner cells ~round apart from +-10% sigma
+jitter; edge-center cells stretched 1.25x along one axis)."""
 import glob
 import numpy as np
 from astropy.io import fits

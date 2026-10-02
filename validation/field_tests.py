@@ -69,7 +69,7 @@ for k in (0.3, 1, 3):
 
 # ------------------------------------------------- 3. median vs mean frame-to-frame
 print("\n#### 3. frame-to-frame stability, 15 realistic frames (power-law star brightness, 900 stars)")
-print("     truth: e=0.0 centre, rising linearly to e=0.5 in the corner cells (tilt-like)")
+print("     truth: e=0.0 center, rising linearly to e=0.5 in the corner cells (tilt-like)")
 
 
 def e_tilt(x, y):
@@ -94,7 +94,7 @@ for f in range(15):
 truth_cell = [np.mean([e_tilt(x, y) for x in np.linspace((k % 3) * 300, (k % 3) * 300 + 300, 20)
                        for y in np.linspace((k // 3) * 300, (k // 3) * 300 + 300, 20)]) for k in range(9)]
 print(f"  stars/frame: initial SEP {np.mean(counts['cur']):.0f}, fixed (SNR>=50) {np.mean(counts['can']):.0f}")
-print(f"  {'':10s} {'centre':>8} {'edge avg':>8} {'corner':>8} {'corner-centre':>13} {'mean f2f std':>12}")
+print(f"  {'':10s} {'center':>8} {'edge avg':>8} {'corner':>8} {'corner-center':>13} {'mean f2f std':>12}")
 tc = np.array(truth_cell)
 print(f"  {'truth':10s} {tc[4]:8.3f} {tc[[1,3,5,7]].mean():8.3f} {tc[[0,2,6,8]].mean():8.3f} {tc[[0,2,6,8]].mean()-tc[4]:13.3f}")
 for k, v in per.items():
@@ -107,7 +107,7 @@ for k, v in per.items():
 print("\n#### 4. orientation diagnostics on realistic frames (fixed extractor)")
 print("  per-cell spin-2 mean  <e*exp(2i theta)>  -> |coherent e|, angle; field decomposition:")
 print("    common  = |mean over all stars of e*exp(2i theta)|")
-print("    radial  = mean of  e*cos(2(theta - phi))  (+ = radial, - = tangential), phi = position angle from centre")
+print("    radial  = mean of  e*cos(2(theta - phi))  (+ = radial, - = tangential), phi = position angle from center")
 
 
 def orientation_summary(s):
